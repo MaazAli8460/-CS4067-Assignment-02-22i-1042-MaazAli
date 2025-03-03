@@ -1,56 +1,67 @@
-// index.js
 const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
-// Load environment variables from .env file
-dotenv.config();
+dotenv.config({ path: __dirname + '/.env' });
 
 const app = express();
-app.use(cors());
-app.use(bodyParser.json()); // to parse JSON requests
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:5000'],
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type'],
+}));
+app.use(bodyParser.json());
 
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
 })
 .then(() => {
-    console.log('Connected to MongoDB for Event Service');
+  console.log('Connected to MongoDB');
 })
 .catch((err) => {
-    console.log('Error connecting to MongoDB:', err);
+  console.log('Error connecting to MongoDB:', err);
 });
 
-// Import Event model
-const Event = require('./models/Event');
+const Event = require('./models/event');
 
-// Route to fetch all events
+// API Endpoints
 app.get('/events', async (req, res) => {
-    try {
-        const events = await Event.find(); // Get all events from the database
-        res.status(200).json(events);
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching events', error });
-    }
+  try {
+    const events = await Event.find();
+    res.status(200).json(events);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching events', error });
+  }
 });
 
-// Route to add a new event
-app.post('/events', async (req, res) => {
-    const { title, description, date, location } = req.body;
-
-    try {
-        const newEvent = new Event({ title, description, date, location });
-        await newEvent.save();
-        res.status(201).json({ message: 'Event created successfully', event: newEvent });
-    } catch (error) {
-        res.status(500).json({ message: 'Error creating event', error });
+app.get('/events/:eventId/availability', async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.eventId);
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found' });
     }
+    res.status(200).json({ availableTickets: event.availableTickets });
+  } catch (error) {
+    res.status(500).json({ message: 'Error checking availability', error });
+  }
 });
 
-// Start the server
-app.listen(5001, () => {
-    console.log('Event Service is running on port 5001');
+const PORT = process.env.PORT || 5001;
+app.listen(PORT, () => {
+  console.log(`EventService is running on port ${PORT}`);
+});
+
+mongoose.connection.once('open', async () => {
+  const count = await Event.countDocuments();
+  if (count === 0) {
+    await Event.insertMany([
+      { title: 'Tech Conference 2025', description: 'A tech event', date: new Date('2025-04-01'), availableTickets: 100 },
+      { title: 'Music Festival', description: 'Live music event', date: new Date('2025-05-15'), availableTickets: 50 },
+    ]);
+    console.log('Sample events added');
+  }
 });

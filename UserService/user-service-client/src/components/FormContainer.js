@@ -1,14 +1,16 @@
+// D:\SEM6\DevOPS\Ass_1\S4067-Assgt-EventBooking-i221053-Huzaifa-Nasir\UserService\user-service-client\src/components/FormContainer.js
+
 import React, { useState } from 'react';
-import Register from './Register';
-import Login from './Login';
+import Register from './Register';  // Import Register component
+import Login from './Login';  // Import Login component
 import styled from 'styled-components';
 
 const FormContainer = () => {
-    const [showRegister, setShowRegister] = useState(true);
+    const [showRegister, setShowRegister] = useState(true);  // Toggle between Register and Login
     const formRef = React.useRef();
 
     const toggleForm = () => {
-        setShowRegister((prev) => !prev);
+        setShowRegister((prev) => !prev);  // Toggle between forms
     };
 
     return (

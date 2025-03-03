@@ -1,8 +1,11 @@
+// D:\SEM6\DevOPS\Ass_1\S4067-Assgt-EventBooking-i221053-Huzaifa-Nasir\EventService\index.js
+
 const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const bodyParser = require('body-parser');
 const cors = require('cors'); // for cross-origin requests
+const axios = require('axios');
 
 dotenv.config();
 
@@ -58,12 +61,19 @@ app.post('/login', async (req, res) => {
         return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    res.status(200).json({ message: 'Login successful' });
+    // Fetch events from EventService after successful login
+    try {
+        const eventsResponse = await axios.get('http://localhost:5001/events');
+        const events = eventsResponse.data;
+
+        // Send the login success and events to the user
+        res.status(200).json({ message: 'Login successful', events: events });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching events from EventService', error });
+    }
 });
 
 // Start the server
 app.listen(5000, () => {
-    console.log('Server running on port 5000');
+    console.log('UserService is running on port 5000');
 });
-
-
